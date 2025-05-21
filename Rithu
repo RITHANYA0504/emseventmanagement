@@ -1,0 +1,246 @@
+Absolutely baby, here's the complete and corrected code for the 5 files you're using in your Angular notification system:
+
+
+---
+
+1. notification.service.ts
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Notification } from '../model/Notification'; // Adjust the path if needed
+
+@Injectable({
+  providedIn: 'root'
+})
+export class NotificationService {
+  private url: string = "http://localhost:9091/notifications";
+
+  constructor(private http: HttpClient) {}
+
+  public getNotificationById(userId: string): Observable<Notification[]> {
+    return this.http.get<Notification[]>(`${this.url}/getNotificationByAttendeeId/${userId}`);
+  }
+
+  public markAsRead(notificationId: string): Observable<any> {
+    return this.http.put(`${this.url}/${notificationId}/read`, null);
+  }
+}
+
+
+---
+
+2. home-navbar.component.html
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#"><img src="favicon.ico" alt="EMS-Logo" /></a>
+    </div>
+
+    <form class="navbar-form navbar-left">
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search Events" [(ngModel)]="searchEvent" />
+        <i class="bi bi-search"></i>
+        <input type="text" class="form-control" placeholder="Neighbourhood,City.." [(ngModel)]="searchLocation" />
+      </div>
+      <button type="button" class="btn btn-default btn-info">
+        <span class="glyphicon glyphicon-search"></span>
+      </button>
+    </form>
+
+    <div class="nav navbar-nav navbar-right">
+      <a href="#">
+        <div class="notification-wrapper">
+          <button class="btn btn-default btn-info circle position-relative" (click)="openNotifications()">
+            <i class="bi bi-bell"></i>
+            <span *ngIf="notificationCount > 0" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+              {{ notificationCount }}
+            </span>
+          </button>
+        </div>
+      </a>&nbsp;
+      <div class="dropdown" style="float:right;">
+        <button class="btn btn-default btn-info circle"><i class="bi bi-person-circle"></i></button>
+        <div class="dropdown-content">
+          <a href="#">Your Events</a>
+          <a href="#">View Profile</a>
+          <a href="#">Settings</a>
+          <a href="#" (click)="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+---
+
+3. home-navbar.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { NotificationService } from 'src/app/services/notification.service';
+import { Notification } from 'src/app/model/Notification';
+
+@Component({
+  selector: 'app-home-navbar',
+  templateUrl: './home-navbar.component.html',
+  styleUrls: ['./home-navbar.component.css']
+})
+export class HomeNavbarComponent implements OnInit {
+  searchEvent: string = '';
+  searchLocation: string = '';
+  notificationCount: number = 0;
+  userId: string = 'JI771';
+  notifications: Notification[] = [];
+
+  constructor(private notificationService: NotificationService, private router: Router) {}
+
+  ngOnInit(): void {
+    this.loadNotifications();
+  }
+
+  loadNotifications(): void {
+    this.notificationService.getNotificationById(this.userId).subscribe({
+      next: (data: Notification[]) => {
+        this.notifications = data;
+        this.notificationCount = data.filter(n => !n.isRead).length;
+      },
+      error: (err) => console.error('Error fetching notifications:', err)
+    });
+  }
+
+  openNotifications(): void {
+    this.router.navigate(['/notification']);
+  }
+
+  logout(): void {
+    console.log('Logging out...');
+  }
+}
+
+
+---
+
+4. notification.component.html
+
+<div class="container mt-4">
+  <h2 class="mb-4">Notifications</h2>
+
+  <div *ngIf="notifications.length === 0" class="alert alert-info">
+    No notifications available.
+  </div>
+
+  <div *ngIf="notifications.length > 0">
+    <div class="list-group">
+      <div *ngFor="let notification of notifications"
+           class="list-group-item"
+           [ngClass]="{ 'unread': !notification.isRead, 'read': notification.isRead }"
+           (click)="markAsRead(notification)">
+        <h5 class="mb-1">{{ notification.event_name }}</h5>
+        <p class="mb-1">{{ notification.message }}</p>
+        <small class="text-muted">Sent: {{ notification.sent_time_stamp | date: 'short' }}</small><br>
+        <small class="text-muted">Contact: {{ notification.contactNumber }}</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+---
+
+5. notification.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { NotificationService } from 'src/app/services/notification.service';
+import { Notification } from 'src/app/model/Notification';
+
+@Component({
+  selector: 'app-notification',
+  templateUrl: './notification.component.html',
+  styleUrls: ['./notification.component.css']
+})
+export class NotificationComponent implements OnInit {
+  notifications: Notification[] = [];
+  userId: string = 'JI771';
+
+  constructor(private notificationService: NotificationService) {}
+
+  ngOnInit(): void {
+    this.loadNotifications();
+  }
+
+  loadNotifications(): void {
+    this.notificationService.getNotificationById(this.userId).subscribe({
+      next: (data: Notification[]) => {
+        this.notifications = data;
+      },
+      error: (err) => console.error('Error loading notifications:', err)
+    });
+  }
+
+  markAsRead(notification: Notification): void {
+    if (!notification.isRead) {
+      this.notificationService.markAsRead(notification.notificationId).subscribe({
+        next: () => {
+          notification.isRead = true;
+        },
+        error: (err) => console.error('Error marking as read:', err)
+      });
+    }
+  }
+}
+
+
+---
+
+6. CSS for Notifications (notification.component.css + home-navbar.component.css)
+
+/* notification.component.css */
+
+.read {
+  background-color: #f8f9fa; /* Light gray for read */
+  color: #6c757d;
+}
+
+.unread {
+  background-color: #d4edda; /* Light green for unread */
+  font-weight: bold;
+  border-left: 5px solid #28a745;
+  cursor: pointer;
+}
+
+/* home-navbar.component.css */
+
+.notification-wrapper {
+  position: relative;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+
+---
+
+Let me know if you want to add animations, real-time updates with polling/WebSocket, or make the notification module mobile responsive, baby. I got you.
+
