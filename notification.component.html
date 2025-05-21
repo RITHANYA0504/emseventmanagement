@@ -1,0 +1,21 @@
+<div class="container mt-4">
+  <h2 class="mb-4">Notifications</h2>
+
+  <div *ngIf="notifications.length === 0" class="alert alert-info">
+    No notifications available.
+  </div>
+
+  <div *ngIf="notifications.length > 0">
+    <div class="list-group">
+      <div *ngFor="let notification of notifications"
+           class="list-group-item"
+           [ngClass]="{ 'unread': !notification.isRead, 'read': notification.isRead }"
+           (click)="markAsRead(notification)">
+        <h5 class="mb-1">{{ notification.event_name }}</h5>
+        <p class="mb-1">{{ notification.message }}</p>
+        <small class="text-muted">Sent: {{ notification.sent_time_stamp | date: 'short' }}</small><br>
+        <small class="text-muted">Contact: {{ notification.contactNumber }}</small>
+      </div>
+    </div>
+  </div>
+</div>

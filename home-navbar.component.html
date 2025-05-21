@@ -1,0 +1,40 @@
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#"><img src="favicon.ico" alt="EMS-Logo"/></a>
+    </div>
+
+    <form class="navbar-form navbar-left">
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search Events" [(ngModel)]="searchEvent" />
+        <i class="bi bi-search"></i>
+        <input type="text" class="form-control" placeholder="Neighbourhood,City.." [(ngModel)]="searchLocation" />
+      </div>
+      <button type="button" class="btn btn-default btn-info">
+        <span class="glyphicon glyphicon-search"></span>
+      </button>
+    </form>
+
+    <div class="nav navbar-nav navbar-right">
+      <a href="#">
+        <div class="notification-wrapper">
+          <button class="btn btn-default btn-info circle position-relative" (click)="openNotifications()">
+            <i class="bi bi-bell"></i>
+            <span *ngIf="notificationCount > 0" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+              {{ notificationCount }}
+            </span>
+          </button>
+        </div>
+      </a>&nbsp;
+      <div class="dropdown" style="float:right;">
+        <button class="btn btn-default btn-info circle"><i class="bi bi-person-circle"></i></button>
+        <div class="dropdown-content">
+          <a href="#">Your Events</a>
+          <a href="#">View Profile</a>
+          <a href="#">Settings</a>
+          <a href="#" (click)="logout()">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
