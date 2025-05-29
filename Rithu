@@ -1,246 +1,163 @@
-Absolutely baby, here's the complete and corrected code for the 5 files you're using in your Angular notification system:
-
-
----
-
-1. notification.service.ts
-
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Notification } from '../model/Notification'; // Adjust the path if needed
-
-@Injectable({
-  providedIn: 'root'
-})
-export class NotificationService {
-  private url: string = "http://localhost:9091/notifications";
-
-  constructor(private http: HttpClient) {}
-
-  public getNotificationById(userId: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.url}/getNotificationByAttendeeId/${userId}`);
-  }
-
-  public markAsRead(notificationId: string): Observable<any> {
-    return this.http.put(`${this.url}/${notificationId}/read`, null);
-  }
-}
-
-
----
-
-2. home-navbar.component.html
-
-<nav class="navbar navbar-default">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#"><img src="favicon.ico" alt="EMS-Logo" /></a>
-    </div>
-
-    <form class="navbar-form navbar-left">
-      <div class="form-group">
-        <input type="text" class="form-control" placeholder="Search Events" [(ngModel)]="searchEvent" />
-        <i class="bi bi-search"></i>
-        <input type="text" class="form-control" placeholder="Neighbourhood,City.." [(ngModel)]="searchLocation" />
-      </div>
-      <button type="button" class="btn btn-default btn-info">
-        <span class="glyphicon glyphicon-search"></span>
-      </button>
-    </form>
-
-    <div class="nav navbar-nav navbar-right">
-      <a href="#">
-        <div class="notification-wrapper">
-          <button class="btn btn-default btn-info circle position-relative" (click)="openNotifications()">
-            <i class="bi bi-bell"></i>
-            <span *ngIf="notificationCount > 0" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
-              {{ notificationCount }}
-            </span>
-          </button>
-        </div>
-      </a>&nbsp;
-      <div class="dropdown" style="float:right;">
-        <button class="btn btn-default btn-info circle"><i class="bi bi-person-circle"></i></button>
-        <div class="dropdown-content">
-          <a href="#">Your Events</a>
-          <a href="#">View Profile</a>
-          <a href="#">Settings</a>
-          <a href="#" (click)="logout()">Logout</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
-
-
----
-
-3. home-navbar.component.ts
-
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { NotificationService } from 'src/app/services/notification.service';
-import { Notification } from 'src/app/model/Notification';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { EventService } from 'src/app/services/event.service';
+import { SharedService } from 'src/app/services/shared/shared.service';
 
 @Component({
-  selector: 'app-home-navbar',
-  templateUrl: './home-navbar.component.html',
-  styleUrls: ['./home-navbar.component.css']
+  selector: 'app-event-create',
+  templateUrl: './event-create.component.html',
+  styleUrls: ['./event-create.component.css']
 })
-export class HomeNavbarComponent implements OnInit {
-  searchEvent: string = '';
-  searchLocation: string = '';
-  notificationCount: number = 0;
-  userId: string = 'JI771';
-  notifications: Notification[] = [];
+export class EventCreateComponent implements OnInit{
 
-  constructor(private notificationService: NotificationService, private router: Router) {}
 
-  ngOnInit(): void {
-    this.loadNotifications();
+
+  eventForm: FormGroup;
+  selectedFile: File | null = null;
+  organizerId:string=''
+  status:string=''
+  constructor(private fb: FormBuilder, private eventService: EventService,private sharedService: SharedService) {
+    this.eventForm = this.fb.group({
+      name: [''],
+      category: [''],
+      location: [''],
+      regDate: [new Date().toISOString()],
+      maxCount: [''],
+      startDateTime: [''],
+      endDateTime: [''],
+      price: [''],
+      organizerId: [''],
+      description: ['']
+    });
   }
+  ngOnInit(): void {
+    this.sharedService.attendeeId$.subscribe(id => {
+      console.log(id)
+      this.organizerId = id;
+      this.eventForm.patchValue({ organizerId: this.organizerId }); 
+      console.log(this.organizerId)
 
-  loadNotifications(): void {
-    this.notificationService.getNotificationById(this.userId).subscribe({
-      next: (data: Notification[]) => {
-        this.notifications = data;
-        this.notificationCount = data.filter(n => !n.isRead).length;
-      },
-      error: (err) => console.error('Error fetching notifications:', err)
     });
   }
 
-  openNotifications(): void {
-    this.router.navigate(['/notification']);
+  onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0];
   }
 
-  logout(): void {
-    console.log('Logging out...');
+  onSubmit() {
+    if (this.eventForm.valid && this.selectedFile) {
+      this.eventService.addEvent(this.eventForm.value, this.selectedFile).subscribe({
+        next: (response) => {
+          this.status = 'Event added successfully!'
+          console.log('Event created:', response);
+        },
+        error: (err) => {
+          console.error('Error creating event:', err);
+        }
+      });
+    }
   }
+
+
 }
+ .card-title {
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+  
+  .form-label {
+    font-weight: 500;
+  }
+  
+  input.form-control, textarea.form-control {
+    border-radius: 0.375rem;
+    box-shadow: none;
+    transition: border-color 0.3s ease-in-out;
+  }
+  
+  input.form-control:focus, textarea.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+  
+  button.btn-primary {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  
+  input{
+    width: 250px;
+  }
+  textarea{
+    width: 300px;
+  }
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4 text-primary">Add New Event</h3>
+          <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-md-6 mb-3 space">
+                <label for="eventName" class="form-label">Event Name</label>
+                <input type="text" class="form-control" id="eventName" formControlName="name" placeholder="Event Name">
+              </div>
+              <div class="col-md-6 mb-3 space">
+                <label for="category" class="form-label">Category</label>
+                <input type="text" class="form-control" formControlName="category" placeholder="Category">
+              </div>
+            </div>
 
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="eventLocation" class="form-label">Location</label>
+                <input type="text" class="form-control" formControlName="location" placeholder="Location">
+              </div>
+            </div>
 
----
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="maxCount" class="form-label">Max Attendees</label>
+                <input type="number" class="form-control" formControlName="maxCount" placeholder="Max Participants">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="startDateTime" class="form-label">Start Date & Time</label>
+                <input type="datetime-local" class="form-control" formControlName="startDateTime">
+              </div>
+            </div>
 
-4. notification.component.html
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="endDateTime" class="form-label">End Date & Time</label>
+                <input type="datetime-local" class="form-control" formControlName="endDateTime">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="eventPrice" class="form-label">Price</label>
+                <input type="number" class="form-control" formControlName="price" placeholder="Event Price">
+              </div>
+            </div>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Notifications</h2>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="description" class="form-label">Event Description</label>
+                <textarea class="form-control" id="description" formControlName="description" placeholder="Description"></textarea>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Upload Image</label>
+                <input type="file" class="form-control" (change)="onFileSelected($event)">
+              </div>
+            </div>
 
-  <div *ngIf="notifications.length === 0" class="alert alert-info">
-    No notifications available.
-  </div>
+            <button type="submit" class="btn btn-primary w-100 mt-3" style="margin-top: 20px;">Add Event</button>
 
-  <div *ngIf="notifications.length > 0">
-    <div class="list-group">
-      <div *ngFor="let notification of notifications"
-           class="list-group-item"
-           [ngClass]="{ 'unread': !notification.isRead, 'read': notification.isRead }"
-           (click)="markAsRead(notification)">
-        <h5 class="mb-1">{{ notification.event_name }}</h5>
-        <p class="mb-1">{{ notification.message }}</p>
-        <small class="text-muted">Sent: {{ notification.sent_time_stamp | date: 'short' }}</small><br>
-        <small class="text-muted">Contact: {{ notification.contactNumber }}</small>
+            <div *ngIf="status" class="mt-3 alert" 
+                 [ngClass]="{'alert-success': status.includes('successfully'), 'alert-danger': status.includes('Error')}">
+              {{ status }}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
-
----
-
-5. notification.component.ts
-
-import { Component, OnInit } from '@angular/core';
-import { NotificationService } from 'src/app/services/notification.service';
-import { Notification } from 'src/app/model/Notification';
-
-@Component({
-  selector: 'app-notification',
-  templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.css']
-})
-export class NotificationComponent implements OnInit {
-  notifications: Notification[] = [];
-  userId: string = 'JI771';
-
-  constructor(private notificationService: NotificationService) {}
-
-  ngOnInit(): void {
-    this.loadNotifications();
-  }
-
-  loadNotifications(): void {
-    this.notificationService.getNotificationById(this.userId).subscribe({
-      next: (data: Notification[]) => {
-        this.notifications = data;
-      },
-      error: (err) => console.error('Error loading notifications:', err)
-    });
-  }
-
-  markAsRead(notification: Notification): void {
-    if (!notification.isRead) {
-      this.notificationService.markAsRead(notification.notificationId).subscribe({
-        next: () => {
-          notification.isRead = true;
-        },
-        error: (err) => console.error('Error marking as read:', err)
-      });
-    }
-  }
-}
-
-
----
-
-6. CSS for Notifications (notification.component.css + home-navbar.component.css)
-
-/* notification.component.css */
-
-.read {
-  background-color: #f8f9fa; /* Light gray for read */
-  color: #6c757d;
-}
-
-.unread {
-  background-color: #d4edda; /* Light green for unread */
-  font-weight: bold;
-  border-left: 5px solid #28a745;
-  cursor: pointer;
-}
-
-/* home-navbar.component.css */
-
-.notification-wrapper {
-  position: relative;
-}
-
-.badge {
-  font-size: 0.75rem;
-  padding: 4px 6px;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
-.circle {
-  border-radius: 50%;
-}
-
-
----
-
-Let me know if you want to add animations, real-time updates with polling/WebSocket, or make the notification module mobile responsive, baby. I got you.
-
