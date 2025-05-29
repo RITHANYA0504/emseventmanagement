@@ -1,0 +1,114 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Add New Event</h3>
+          <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+            
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Event Name</label>
+                <input type="text" class="form-control" formControlName="name" placeholder="Enter event name">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Category</label>
+                <input type="text" class="form-control" formControlName="category" placeholder="Enter category">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-control" formControlName="location" placeholder="Enter location">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Max Attendees</label>
+                <input type="number" class="form-control" formControlName="maxCount" placeholder="e.g. 100">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Start Date & Time</label>
+                <input type="datetime-local" class="form-control" formControlName="startDateTime">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">End Date & Time</label>
+                <input type="datetime-local" class="form-control" formControlName="endDateTime">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Price</label>
+                <input type="number" class="form-control" formControlName="price" placeholder="e.g. 500">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Upload Image</label>
+                <input type="file" class="form-control" (change)="onFileSelected($event)">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <label class="form-label">Event Description</label>
+                <textarea class="form-control" formControlName="description" placeholder="Describe your event..."></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4">Add Event</button>
+
+            <div *ngIf="status" class="mt-3 alert" 
+                 [ngClass]="{'alert-success': status.includes('successfully'
+.container {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.card {
+  border-radius: 1rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 2rem;
+  color: #0d6efd;
+  text-align: center;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #444;
+}
+
+input.form-control,
+textarea.form-control,
+select.form-control {
+  border-radius: 0.5rem;
+  box-shadow: none;
+  transition: border-color 0.3s ease-in-out;
+}
+
+input.form-control:focus,
+textarea.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 5px rgba(13, 110, 253, 0.3);
+}
+
+textarea.form-control {
+  resize: none;
+  height: 100px;
+}
+
+button.btn-primary {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 0.5rem;
+}
+
+.row > div {
+  margin-bottom: 1rem;
+}
