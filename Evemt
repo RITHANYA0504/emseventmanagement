@@ -1,186 +1,286 @@
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <h3 class="card-title mb-4">Add New Event</h3>
-          <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
-            
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Event Name</label>
-                <input type="text" class="form-control" formControlName="name" placeholder="Enter event name">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Category</label>
-                <input type="text" class="form-control" formControlName="category" placeholder="Enter category">
-              </div>
-            </div>
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import flatpickr from 'flatpickr';
+import { SharedService } from 'src/app/services/shared/shared.service';
+import { UserServiceService } from 'src/app/services/user-service.service';
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Location</label>
-                <input type="text" class="form-control" formControlName="location" placeholder="Enter location">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Max Attendees</label>
-                <input type="number" class="form-control" formControlName="maxCount" placeholder="e.g. 100">
-              </div>
-            </div>
+@Component({
+  selector: 'app-your-events',
+  templateUrl: './your-events.component.html',
+  styleUrls: ['./your-events.component.css']
+})
+export class YourEventsComponent implements AfterViewInit,OnInit{
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Start Date & Time</label>
-                <input type="datetime-local" class="form-control" formControlName="startDateTime">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">End Date & Time</label>
-                <input type="datetime-local" class="form-control" formControlName="endDateTime">
-              </div>
-            </div>
+  userId:string;
+  choice: string = 'attending';
+  selectedDate: Date = new Date();
+  preferenceList:string[]=[];
+  isEventEmpty: boolean;
+  unsaveClicked:string;
+  constructor(private userServ: UserServiceService,private route:ActivatedRoute,private sharedService: SharedService) {
+  }
+  ngOnInit(): void {
+    this.sharedService.attendeeId$.subscribe(id => {
+      console.log(id)
+      this.userId = id;
+      
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-control" formControlName="price" placeholder="e.g. 500">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Upload Image</label>
-                <input type="file" class="form-control" (change)="onFileSelected($event)">
-              </div>
-            </div>
+    });
+    // this.userId = this.route.snapshot.paramMap.get('userId') || '';
 
-            <div class="row">
-              <div class="col-12">
-                <label class="form-label">Event Description</label>
-                <textarea class="form-control" formControlName="description" placeholder="Describe your event..."></textarea>
-              </div>
-            </div>
+  }
 
-            <button type="submit" class="btn btn-primary w-100 mt-4">Add Event</button>
+  public f1($event): void {
+    this.isEventEmpty = $event;
+    
+  }
+  public unsaveClickedPar($id):void{
+    this.unsaveClicked=$id;
+    console.log(this.unsaveClicked);
+    this.removePreference(this.userId,this.unsaveClicked);
+    
+  }
+  attendChange() {
+    this.choice = 'attending';
+  }
 
-            <div *ngIf="status" class="mt-3 alert" 
-                 [ngClass]="{'alert-success': status.includes('successfully'
-.container {
-  max-height: 90vh;
-  overflow-y: auto;
-  padding-bottom: 20px;
+  hostChange() {
+    this.choice = 'hosting';
+  }
+
+  savedChange() {
+    this.choice = 'saved';
+  }
+
+  pastChange() {
+    this.choice='past';
+  }
+
+  ngAfterViewInit(): void {
+
+    flatpickr("#calendar-only", {
+      inline: true,
+      defaultDate: this.selectedDate,
+      prevArrow: '<i class="bi bi-chevron-left"></i>',
+      nextArrow: '<i class="bi bi-chevron-right"></i>',
+      onChange: (selectedDates: Date[]) => {
+        if (selectedDates.length > 0) {
+          this.selectedDate = selectedDates[0];
+          console.log(this.selectedDate);
+        }
+      }
+
+    });
+  }
+
+  isToday(): boolean {
+    const selected = new Date(this.selectedDate);
+    const current = new Date();
+
+    return selected.getFullYear() === current.getFullYear() &&
+      selected.getMonth() === current.getMonth() &&
+      selected.getDate() === current.getDate();
+  }
+
+
+  public getPreference(userId: string): void {
+    this.userServ.getPreference(this.userId).subscribe((p) => this.preferenceList = p);
+  }
+
+  public removePreference(userId:string, eventId:string){
+    this.userServ.removePreference(userId,eventId).subscribe((p)=> console.log(p));  
+    this.choice='';
+    setTimeout(() => this.choice ='saved',1);
+    this.getPreference(this.userId);
+  }
+}
+.cont-body{
+    width: 100%;
+   height: 100vh;
+    /* background-color: brown; */
+    display: flex;
+    flex-direction: row;
+    overflow: auto;
+
 }
 
-.card {
-  border-radius: 1rem;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+.cont-side{
+    max-height: 100vh;
+    width:32%;
+    /* background-color: blue; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.card-title {
-  font-weight: 600;
-  font-size: 2rem;
-  color: #0d6efd;
-  text-align: center;
+.cont-calender{
+    width: 300px;
+    height: 300px;
+    /* background-color: black; */
+    margin-bottom: 30px;
 }
 
-.form-label {
-  font-weight: 600;
-  color: #444;
+.cont-opt{
+    width: 300px;
+    height: 250px;
+    background-color:rgb(246 247 248/var(--tw-bg-opacity,1));
+    display: flex;
+    flex-direction: column;
+    /* justify-content: space-evenly; */
+    align-items:flex-start;
+    border-radius: 10px;
+    padding-top: 30px;
+    padding-left: 20px;
 }
 
-input.form-control,
-textarea.form-control,
-select.form-control {
-  border-radius: 0.5rem;
-  box-shadow: none;
-  transition: border-color 0.3s ease-in-out;
+.cont-opt button {
+    border: none;
+    text-decoration: none;
+    color: rgb(112 112 112 / var(--tw-text-opacity, 1));
+    font-weight: 600;
+    font-size: 20px;
+    margin-left: 30px;
+    margin-bottom: 13px;
+    background: none;
+    cursor: pointer;
 }
 
-input.form-control:focus,
-textarea.form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 5px rgba(13, 110, 253, 0.3);
+.cont-opt button:hover {
+    color: rgb(0, 98, 112); /* This changes the font color on hover */
 }
 
-textarea.form-control {
-  resize: none;
-  height: 100px;
+
+
+.cont-event{
+    min-height: 100vh;
+    width: 68%;
+    /* background-color: aquamarine; */
 }
 
-button.btn-primary {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  border-radius: 0.5rem;
+
+
+.card-calendar {
+
+  border: none;
+
+  border-radius: .75rem;
+
+  box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075);
+
 }
+ 
 
-.row > div {
-  margin-bottom: 1rem;
-}<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <h3 class="card-title mb-4">Add New Event</h3>
-          <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
-            
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Event Name</label>
-                <input type="text" class="form-control" formControlName="name" placeholder="Enter event name">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Category</label>
-                <input type="text" class="form-control" formControlName="category" placeholder="Enter category">
-              </div>
-            </div>
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Location</label>
-                <input type="text" class="form-control" formControlName="location" placeholder="Enter location">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Max Attendees</label>
-                <input type="number" class="form-control" formControlName="maxCount" placeholder="e.g. 100">
-              </div>
-            </div>
+.flatpickr-calendar.inline {
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Start Date & Time</label>
-                <input type="datetime-local" class="form-control" formControlName="startDateTime">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">End Date & Time</label>
-                <input type="datetime-local" class="form-control" formControlName="endDateTime">
-              </div>
-            </div>
+  box-shadow: none; 
 
-            <div class="row">
-              <div class="col-md-6">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-control" formControlName="price" placeholder="e.g. 500">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Upload Image</label>
-                <input type="file" class="form-control" (change)="onFileSelected($event)">
-              </div>
-            </div>
+  border: none; 
 
-            <div class="row">
-              <div class="col-12">
-                <label class="form-label">Event Description</label>
-                <textarea class="form-control" formControlName="description" placeholder="Describe your event..."></textarea>
-              </div>
-            </div>
+}
+ 
+.flatpickr-months {
 
-            <button type="submit" class="btn btn-primary w-100 mt-4">Add Event</button>
+  background: transparent; 
 
-            <div *ngIf="status" class="mt-3 alert" 
-                 [ngClass]="{'alert-success': status.includes('successfully'), 'alert-danger': status.includes('Error')}">
-              {{ status }}
-            </div>
+}
+ 
+.flatpickr-month .flatpickr-prev-month,
 
-          </form>
-        </div>
-      </div>
+.flatpickr-month .flatpickr-next-month {
+
+  color: rgb(0, 98, 112);; 
+
+  font-size: 1.25rem;
+
+}
+ 
+.flatpickr-weekday {
+
+  color: #6c757d; 
+
+}
+ 
+.flatpickr-day.selected {
+
+  background: rgb(0, 98, 112);; 
+
+  color: #fff; 
+
+}
+ 
+.flatpickr-day.today {
+
+  border: 2px solid rgba(17, 122, 139,.5); 
+
+}
+.cont-body {
+  display: flex;
+}
+.cont-side {
+  position: fixed;
+  top: 0;
+  width: 28%; /* Adjust this value as needed */
+  background-color: #fff; /* Optional: to ensure the background is visible */
+  z-index: 1000; /* Optional: to ensure it stays above other elements */
+  height: 100vh; /* Make it full height */
+  overflow-y: auto; /* Enable scrolling within the fixed div */
+}
+.cont-event {
+  margin-left: 28%; /* Adjust this value to match the width of cont-side */
+  padding: 20px;
+  width: 80%; /* Adjust this value as needed */
+}
+.sticky {
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 10; /* Adjust this value as needed */
+  background-color: #f1f1f1;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+.header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 80px;
+  background-color: white;
+  z-index: 10;
+  padding: 10px;
+}<div class="cont-body">
+  <div class="cont-side">
+    <div class="card card-calendar p-4 mb-4">
+      <div id="calendar-only"></div>
+    </div>
+    <div class="cont-opt">
+      <button (click)="attendChange()"
+        [ngStyle]="{'color': choice === 'attending' ? 'rgb(0, 98, 112)' : 'rgb(112 112 112 / var(--tw-text-opacity, 1))'}">
+        Attending
+      </button>
+      <button (click)="hostChange()"
+        [ngStyle]="{'color': choice === 'hosting' ? 'rgb(0, 98, 112)' : 'rgb(112 112 112 / var(--tw-text-opacity, 1))'}">Hosting</button>
+      <button (click)="savedChange()"
+        [ngStyle]="{'color': choice === 'saved' ? 'rgb(0, 98, 112)' : 'rgb(112 112 112 / var(--tw-text-opacity, 1))'}">Saved</button>
+      <button (click)="pastChange()"
+        [ngStyle]="{'color': choice === 'past' ? 'rgb(0, 98, 112)' : 'rgb(112 112 112 / var(--tw-text-opacity, 1))'}">Past</button>
     </div>
   </div>
-</div>
+  <div class="cont-event">
+    <div class="header">
+      <h1>Your events</h1>
+      <hr style="border: 1px solid #000;">
+    </div>
+    <h3 class="border-b-2 border-gray5 pb-3 text-xl font-medium capitalize md:text-xl" style="margin-top: 20px;">
+      {{ isToday() ? 'Today' : (selectedDate | date:'MMMM d, y') }}
+    </h3>
 
+
+
+    <h3 class="border-b-2 border-gray5 pb-3 text-xl font-medium capitalize md:text-xl" [hidden]="!isEventEmpty">No
+      Events Booked for today</h3>
+    <app-all-events [filterChoice]='choice' [selectedDate]="selectedDate" [userId]="userId" (unsaveClicked)="unsaveClickedPar($event)" (isEventEmpty)="f1($event)"></app-all-events>
+    <hr style="border: 1px solid #000;">
+    <app-all-events ></app-all-events>
+  </div>
+</div>
